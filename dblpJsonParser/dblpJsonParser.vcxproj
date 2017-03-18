@@ -71,19 +71,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\boost\boost_1_62_0;C:\JsonCpp\jsoncpp-master\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;C:\JsonCpp\jsoncpp-master\build\vs71\debug\lib_json;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\boost\boost_1_62_0;C:\rapidjson\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\boost\boost_1_62_0;C:\JsonCpp\jsoncpp-master\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;C:\JsonCpp\jsoncpp-master\build\vs71\debug\lib_json;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\boost\boost_1_62_0;C:\rapidjson\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\rapidjson\include;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\rapidjson\include;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -99,7 +103,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>json_vc71_libmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,7 +120,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>json_vc71_libmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
