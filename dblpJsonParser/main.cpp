@@ -14,6 +14,13 @@
 
 using namespace std;
 
+enum MODE {
+	NONE = 0,
+	PAPER = 1,
+	COAUTHOR = 2,
+};
+const int mode = MODE::PAPER | MODE::COAUTHOR;
+
 const char* DBLP_FILENAME = "dblp.json";
 const char* DBLP_COAUTHOR_FILENAME = "tmp_dblp_coauthorship.json";
 const string COLUMN_DELIMITER = "||";
@@ -159,29 +166,148 @@ struct DblpPaperHandler {
 	}
 };
 
+struct CoauthorRecord {
+	string author1, author2;
+	unsigned int year;
 
-int main() {
-	try {
-		ifstream dblp_paper_in, dblp_coauthor_in;
-		ofstream dblp_paper_out, dblp_coauthor_out;
-		dblp_paper_in.open(DBLP_FILENAME);
-		dblp_paper_out.open((string(DBLP_FILENAME)+string(".out")).c_str());
-		if (!dblp_paper_in || !dblp_paper_out) {
-			throw exception("dblp paper file");
+	void write(ofstream& fout) {
+		fout << author1 << COLUMN_DELIMITER
+			<< author2 << COLUMN_DELIMITER
+			<< year << endl;
+	}
+};
+
+struct DblpCoauthorHandler {
+	bool whole_array = false;
+	bool is_record = false;
+	int read_author_cnt = 0;
+	uint64_t record_count = 0;
+
+	CoauthorRecord coauthor;
+	ofstream& ofs;
+
+	DblpCoauthorHandler(ofstream& fout)
+		: ofs(fout) {
+	}
+
+	//
+	bool Null() {
+		return true;
+	}
+	bool Bool(bool b) {
+		//cout << "Bool(" << boolalpha << b << ")" << endl;
+		return true;
+	}
+	bool Int(int i) {
+		//cout << "Int(" << i << ")" << endl;
+		return true;
+	}
+	bool Uint(unsigned u) {
+		coauthor.year = u;
+		return true;
+	}
+	bool Int64(int64_t i) {
+		//cout << "Int64(" << i << ")" << endl;
+		return true;
+	}
+	bool Uint64(uint64_t u) {
+		//cout << "Uint64(" << u << ")" << endl;
+		return true;
+	}
+	bool Double(double d) {
+		//cout << "Double(" << d << ")" << endl;
+		return true;
+	}
+	bool RawNumber(const char* str, rapidjson::SizeType length, bool copy) {
+		//cout << "Number(" << str << ", " << length << ", " << boolalpha << copy << ")" << endl;
+		return true;
+	}
+	bool String(const char* str, rapidjson::SizeType length, bool copy) {
+		if (is_record) {
+			if (read_author_cnt == 0) {
+				coauthor.author1 = string(str);
+			} else {
+				coauthor.author2 = string(str);
+			}
+
+			++read_author_cnt;
 		}
+		return true;
+	}
+	bool StartObject() {
+		//cout << "StartObject()" << endl;
+		return true;
+	}
+	bool Key(const char* str, rapidjson::SizeType length, bool copy) {
+		//cout << "Key(" << str << ", " << length << ", " << boolalpha << copy << ")" << endl;
+		return true;
+	}
+	bool EndObject(rapidjson::SizeType memberCount) {
+		//cout << "EndObject(" << memberCount << ")" << endl;
+		return true;
+	}
+	bool StartArray() {
+		if (!whole_array) {
+			whole_array = true;
+		} else if (!is_record) {
+			is_record = true;
+			read_author_cnt = 0;
+		}
+		return true;
+	}
+	bool EndArray(rapidjson::SizeType elementCount) {
+		if (is_record) {
+			coauthor.write(ofs);
+			is_record = false;
+			++record_count;
+			if (record_count % 100000 == 0) {
+				printf("* [%" PRIu64 "] \n", record_count);
+			}
+		} else {
+			whole_array = false;
+			printf("* total paper record: [%" PRIu64 "]\n", record_count);
+		}
+		return true;
+	}
+};
+
+
+int main(int argc, char* argv[]) {
+	rapidjson::Reader reader;
+	try {
+		if (mode & MODE::PAPER) {
+			ifstream dblp_paper_in;
+			ofstream dblp_paper_out;
+			dblp_paper_in.open(DBLP_FILENAME);
+			dblp_paper_out.open((string(DBLP_FILENAME)+string(".out")).c_str());
+			if (!dblp_paper_in || !dblp_paper_out) {
+				throw exception("dblp paper file");
+			}
 		
-		DblpPaperHandler paper_handler(dblp_paper_out);
+			DblpPaperHandler paper_handler(dblp_paper_out);
+			rapidjson::IStreamWrapper dblp_paper_isw(dblp_paper_in);
+			reader.Parse(dblp_paper_isw, paper_handler);
 
-		rapidjson::IStreamWrapper dblp_paper_isw(dblp_paper_in);
-		rapidjson::Reader reader;
+			if (dblp_paper_in) dblp_paper_in.close();
+			if (dblp_paper_out) dblp_paper_out.close();
+		}
 
-		reader.Parse(dblp_paper_isw, paper_handler);
+		if (mode & MODE::COAUTHOR) {
+			ifstream dblp_coauthor_in;
+			ofstream dblp_coauthor_out;
+			dblp_coauthor_in.open(DBLP_COAUTHOR_FILENAME);
+			dblp_coauthor_out.open((string(DBLP_COAUTHOR_FILENAME)+string(".out")).c_str());
+			if (!dblp_coauthor_in || !dblp_coauthor_out) {
+				throw exception("dblp coauthor file");
+			}
 
-		//release
-		if (dblp_paper_in) dblp_paper_in.close();
-		if (dblp_paper_out) dblp_paper_out.close();
-		if (dblp_coauthor_in) dblp_coauthor_in.close();
-		if (dblp_coauthor_out) dblp_coauthor_out.close();
+			DblpCoauthorHandler coauthor_handler(dblp_coauthor_out);
+			rapidjson::IStreamWrapper dblp_coauthor_isw(dblp_coauthor_in);
+			reader.Parse(dblp_coauthor_isw, coauthor_handler);
+
+			if (dblp_coauthor_in) dblp_coauthor_in.close();
+			if (dblp_coauthor_out) dblp_coauthor_out.close();
+		}
 	}
 	catch (const exception& e) {
 		cerr << "Error: " << e.what() << endl;
